@@ -22,12 +22,12 @@ class ConUsuario {
             return "Debe aceptar las condiciones";
         }
 
-        if ($this->modelo->existeUsuario($_POST['user'])) {
+        if ($this->modelo->existeUsuario()) {
             return "El nombre de usuario ya existe";
         }
 
-        $res = $this->modelo->insertarUsuario($_POST, $_POST['deportes'] ?? []);
-        return $res ? "Usuario añadido" : "Error al insertar";
+        $res = $this->modelo->registrarUsuario();
+        return $res ? "Usuario registrado" : "Error al registrar";
     }
 
     public function login() {
@@ -35,7 +35,7 @@ class ConUsuario {
     }
 
     public function procesarLogin() {
-        $usuario = $this->modelo->login($_POST['user'], $_POST['pass']);
+        $usuario = $this->modelo->login();
         if ($usuario) {
             session_start();
             $_SESSION['perfil'] = $usuario['perfil'];
@@ -43,5 +43,13 @@ class ConUsuario {
         } else {
             return "Credenciales incorrectas";
         }
+    }
+
+    public function adminMenu() {
+        $datos['usuarios_deportes'] = $this->modelo->listarUsuarios();
+        $datos['total_deportes'] = $this->modelo->totalDeportes();
+        $datos['deportes'] = $this->modelo->listarDeportes();
+        $this->vista = "menuAdmin.php";
+        return $datos;
     }
 }

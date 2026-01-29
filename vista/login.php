@@ -7,20 +7,20 @@
     <body>
         <h2>Identificación de Usuario</h2>
         <?php if (isset($datos) && is_string($datos)): ?>
-            <p style="color: red;"><?= $datos ?></p>
+            <p><?= $datos ?></p>
         <?php endif; ?>
         <form action="index.php?c=Usuario&m=procesarLogin" method="POST">
             <div>
                 <label>Usuario:</label><br>
-                <input type="text" name="user" required>
+                <input type="text" name="nombreUsuario" required>
             </div>
             <br>
             <div>
                 <label>Contraseña:</label><br>
-                <input type="password" name="pass" required>
+                <input type="password" name="password" required>
             </div>
             <br>
-            <button type="submit">ENVIAR</button>
+            <button type="submit">ENTRAR</button>
         </form>
         <br>
         <a href="index.php">Volver al inicio</a>

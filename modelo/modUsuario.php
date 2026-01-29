@@ -8,24 +8,36 @@ class ModUsuario {
         $this->conexion = new mysqli(SERVER, USER, PASS, DB);
     }
 
-    public function login($user, $pass) {
-        $sql = "SELECT * FROM usuarios WHERE user = '$user' AND pass = '$pass'";
+    public function login() {
+        $nombreUsuario = $_POST['nombreUsuario'];
+        $password = $_POST['password'];
+        $sql = "SELECT * FROM usuarios WHERE nombreUsuario = '$nombreUsuario' AND password = '$password'";
         $res = $this->conexion->query($sql);
         return $res->fetch_assoc();
     }
 
-    public function existeUsuario($user) {
-        $sql = "SELECT id FROM usuarios WHERE user = '$user'";
+    public function existeUsuario() {
+        $nombreUsuario = $_POST['nombreUsuario'];
+        $sql = "SELECT idUsuario FROM usuarios WHERE nombreUsuario = '$nombreUsuario'";
         $res = $this->conexion->query($sql);
         return $res->num_rows > 0;
     }
 
-    public function insertarUsuario($datos, $deportes) {
+    public function registrarUsuario() {
+        $datos = $_POST;
+        $deportes = $_POST['deportes'] ?? [];
+
         $tel = !empty($datos['telefono']) ? "'".$datos['telefono']."'" : "NULL";
         
-        $sql = "INSERT INTO usuarios (user, nombre, pass, email, telefono, perfil) 
-                VALUES ('{$datos['user']}', '{$datos['nombre']}', '{$datos['pass']}', 
-                        '{$datos['email']}', $tel, 'u')";
+        $nombreUsuario = $datos['nombreUsuario'];
+        $apeNombre = $datos['apeNombre'];
+        $password = $datos['password'];
+        $correo = $datos['correo'];
+        $telefono = $datos['telefono'];
+        $perfil = $datos['perfil'] ?? 'u';
+
+        $sql = "INSERT INTO usuarios (nombreUsuario, apeUsuario, password, correo, telefono, perfil) 
+                VALUES ('$nombreUsuario', '$apeNombre', '$password', '$correo', '$telefono', '$perfil')";
         
         if ($this->conexion->query($sql)) {
             $idUsuario = $this->conexion->insert_id;
@@ -37,6 +49,49 @@ class ModUsuario {
             return true;
         }
         return false;
+    }
+
+    public function listarUsuarios(){
+        $sql = "SELECT u.idUsuario, u.nombreUsuario, u.apeNombre, u.correo, u.telefono, u.perfil, d.nombreDep AS deporte
+            FROM Usuarios u
+            INNER JOIN Usuarios_deportes ud ON u.idUsuario = ud.idUsuario
+            INNER JOIN Deportes d ON ud.idDeporte = d.idDeporte";
+        $res = $this->conexion->query($sql);
+
+        $datos = [];
+        while ($fila = $res->fetch_assoc()) {
+            $datos[] = $fila;
+        }
+
+        return $datos;
+    }
+
+    public function totalDeportes(){
+        $sql = "SELECT COUNT(DISTINCT idDeporte) AS Total_Deportes
+                FROM Usuarios_deportes";
+        $res = $this->conexion->query($sql);
+
+        $datos = [];
+        while ($fila = $res->fetch_assoc()) {
+            $datos[] = $fila;
+        }
+
+        return $datos;
+    }
+
+    public function listarDeportes(){
+        $sql = "SELECT d.nombreDep AS deporte, COUNT(ud.idUsuario) AS total_usuarios
+                FROM Deportes d
+                JOIN Usuarios_deportes ud ON d.idDeporte = ud.idDeporte
+                GROUP BY d.idDeporte, d.nombreDep";
+        $res = $this->conexion->query($sql);
+        
+        $datos = [];
+        while ($fila = $res->fetch_assoc()) {
+            $datos[] = $fila;
+        }
+
+        return $datos;
     }
 
 }
