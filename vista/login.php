@@ -11,17 +11,14 @@
         }
         ?>
         <h2>Identificación de Usuario</h2>
-        <?php if (isset($datos) && is_string($datos)): ?>
-            <p><?= $datos ?></p>
-        <?php endif; ?>
         <form action="index.php?c=Usuario&m=procesarLogin" method="POST">
             <div>
-                <label>Usuario:</label><br>
+                <label for="nombreUsuario">Usuario:</label><br>
                 <input type="text" name="nombreUsuario">
             </div>
             <br>
             <div>
-                <label>Contraseña:</label><br>
+                <label for="password">Contraseña:</label><br>
                 <input type="password" name="password">
             </div>
             <br>

@@ -12,18 +12,18 @@
         ?>
         <h2>Formulario de Inscripción</h2>
         <form action="index.php?c=Usuario&m=procesarInscripcion" method="POST">
-            <label>Usuario:</label><br/>
+            <label for="nombreUsuario">Usuario:</label><br/>
             <input type="text" name="nombreUsuario"><br/>
-            <label>Nombre y Apellidos:</label><br/>
+            <label for="apeNombre">Nombre y Apellidos:</label><br/>
             <input type="text" name="apeNombre"><br/>
-            <label>Password:</label><br/>
+            <label for="password">Password:</label><br/>
             <input type="password" name="password"><br/>
-            <label>Email:</label><br/>
+            <label for="correo">Email:</label><br/>
             <input type="email" name="correo"><br/>
-            <label>Teléfono:</label><br/>
+            <label for="telefono">Teléfono:</label><br/>
             <input type="text" name="telefono"><br/>
             
-            <label>Deportes:</label><br>
+            <label for="deportes[]">Deportes:</label><br>
             <input type="checkbox" name="deportes[]" value="1"> Fútbol<br/>
             <input type="checkbox" name="deportes[]" value="2"> Baloncesto<br/>
             <input type="checkbox" name="deportes[]" value="3"> Tenis de mesa<br/><br/>
