@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once "config/routes.php";
 
 $controlador = $_GET["c"] ?? DEFAULT_CONTROLADOR;

@@ -9,53 +9,96 @@ class ModUsuario {
     }
 
     public function login() {
-        $nombreUsuario = $_POST['nombreUsuario'];
-        $password = $_POST['password'];
-        $sql = "SELECT * FROM usuarios WHERE nombreUsuario = '$nombreUsuario' AND password = '$password'";
-        $res = $this->conexion->query($sql);
-        return $res->fetch_assoc();
+        $sql = "SELECT * FROM Usuarios WHERE nombreUsuario = ? AND password = ?";
+        $stmt = $this->conexion->prepare($sql);
+
+        $usuario = $_POST['nombreUsuario'];
+        $pass = $_POST['password'];
+        
+        $stmt->bind_param("ss", $usuario, $pass);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        $datos = [];
+        if ($fila = $res->fetch_assoc()) {
+            $datos = $fila;
+        }
+
+        return $datos;
     }
 
     public function existeUsuario() {
         $nombreUsuario = $_POST['nombreUsuario'];
-        $sql = "SELECT idUsuario FROM usuarios WHERE nombreUsuario = '$nombreUsuario'";
-        $res = $this->conexion->query($sql);
-        return $res->num_rows > 0;
+        $sql = "SELECT idUsuario FROM Usuarios WHERE nombreUsuario = ?";
+        $stmt = $this->conexion->prepare($sql);
+
+        $usuario = $_POST['nombreUsuario'];
+
+        $stmt->bind_param("s", $usuario);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+
+        return $resultado->num_rows > 0;
     }
 
-    public function registrarUsuario() {
-        $datos = $_POST;
-        $deportes = $_POST['deportes'] ?? [];
+        public function registrarUsuario() {
+            $deportes = $_POST['deportes'] ?? [];
+            
+            
+            try {
+                $this->conexion->begin_transaction();
+                // Insertamos los datos del usuario
+                $sql = "INSERT INTO Usuarios 
+                (nombreUsuario, apeNombre, password, correo, telefono, perfil)
+                VALUES (?, ?, ?, ?, ?, ?)";
 
-        $tel = !empty($datos['telefono']) ? "'".$datos['telefono']."'" : "NULL";
-        
-        $nombreUsuario = $datos['nombreUsuario'];
-        $apeNombre = $datos['apeNombre'];
-        $password = $datos['password'];
-        $correo = $datos['correo'];
-        $telefono = $datos['telefono'];
-        $perfil = $datos['perfil'] ?? 'u';
+                $stmt = $this->conexion->prepare($sql);
 
-        $sql = "INSERT INTO usuarios (nombreUsuario, apeUsuario, password, correo, telefono, perfil) 
-                VALUES ('$nombreUsuario', '$apeNombre', '$password', '$correo', '$telefono', '$perfil')";
-        
-        if ($this->conexion->query($sql)) {
-            $idUsuario = $this->conexion->insert_id;
-            foreach ($deportes as $idDeporte) {
-                $sqlDep = "INSERT INTO usuarios_deportes (id_usuario, id_deporte) 
-                           VALUES ($idUsuario, $idDeporte)";
-                $this->conexion->query($sqlDep);
+                $usuario = $_POST['nombreUsuario'];
+                $ape = $_POST['apeNombre'];
+                $pass = $_POST['password'];
+                $correo = $_POST['correo'];
+                $telefono = !empty($_POST['telefono']) ? $_POST['telefono'] : null;
+                $perfil = 'u';
+
+                $stmt->bind_param("ssssis",$usuario,$ape,$pass,$correo,$telefono,$perfil);
+                $stmt->execute();
+
+                // Obtenemos el id de usuario e insertamos si tiene deportes
+                $idUsuario = $this->conexion->insert_id;
+                if (!empty($deportes)) {
+                    $sqlDeporte = "INSERT INTO usuarios_deportes (idUsuario, idDeporte) VALUES (?, ?)";
+                    $stmtDeporte = $this->conexion->prepare($sqlDeporte);
+
+                    foreach ($deportes as $idDeporte) {
+                        $stmtDeporte->bind_param("ii", $idUsuario, $idDeporte);
+                        $stmtDeporte->execute();
+                    }
+                }
+
+                // Si todo ha salido bien hacemos un commit
+                $this->conexion->commit();
+            } catch (Exception $e) {
+                // Si se produce algun error al hacer las 2 consultas hacemos un rollback
+                $this->conexion->rollback();
+                return false;
             }
+            
             return true;
         }
-        return false;
-    }
 
     public function listarUsuarios(){
-        $sql = "SELECT u.idUsuario, u.nombreUsuario, u.apeNombre, u.correo, u.telefono, u.perfil, d.nombreDep AS deporte
-            FROM Usuarios u
-            INNER JOIN Usuarios_deportes ud ON u.idUsuario = ud.idUsuario
-            INNER JOIN Deportes d ON ud.idDeporte = d.idDeporte";
+        $sql = "SELECT u.idUsuario,
+                    u.nombreUsuario,
+                    u.apeNombre,
+                    u.correo,
+                    u.telefono,
+                    u.perfil,
+                    d.nombreDep AS deporte
+                FROM Usuarios u
+                JOIN Usuarios_deportes ud ON u.idUsuario = ud.idUsuario
+                JOIN Deportes d ON ud.idDeporte = d.idDeporte
+                ORDER BY u.idUsuario;";
         $res = $this->conexion->query($sql);
 
         $datos = [];
@@ -68,7 +111,7 @@ class ModUsuario {
 
     public function totalDeportes(){
         $sql = "SELECT COUNT(DISTINCT idDeporte) AS Total_Deportes
-                FROM Usuarios_deportes";
+                FROM Usuarios_deportes;";
         $res = $this->conexion->query($sql);
 
         $datos = [];
@@ -82,8 +125,9 @@ class ModUsuario {
     public function listarDeportes(){
         $sql = "SELECT d.nombreDep AS deporte, COUNT(ud.idUsuario) AS total_usuarios
                 FROM Deportes d
-                JOIN Usuarios_deportes ud ON d.idDeporte = ud.idDeporte
-                GROUP BY d.idDeporte, d.nombreDep";
+                LEFT JOIN Usuarios_deportes ud ON d.idDeporte = ud.idDeporte
+                GROUP BY d.idDeporte, d.nombreDep
+                ORDER BY d.idDeporte;";
         $res = $this->conexion->query($sql);
         
         $datos = [];
